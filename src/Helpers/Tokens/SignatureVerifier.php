@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Auth0\SDK\Helpers\Tokens;
@@ -37,7 +38,7 @@ abstract class SignatureVerifier
      *
      * @return boolean
      */
-    abstract protected function checkSignature(Token $parsedToken) : bool;
+    abstract protected function checkSignature(Token $parsedToken): bool;
 
     /**
      * SignatureVerifier constructor.
@@ -47,7 +48,7 @@ abstract class SignatureVerifier
     public function __construct(string $alg)
     {
         $this->alg    = $alg;
-        $this->parser = new Parser();
+        $this->parser = \App::make('Lcobucci\JWT\Parser');
     }
 
     /**
@@ -61,24 +62,24 @@ abstract class SignatureVerifier
      * @throws InvalidTokenException If token algorithm does not match the validator.
      * @throws InvalidTokenException If token algorithm signature cannot be validated.
      */
-    final public function verifyAndDecode(string $token) : Token
+    final public function verifyAndDecode(string $token): Token
     {
         try {
             $parsedToken = $this->parser->parse($token);
         } catch (InvalidArgumentException | \RuntimeException $e) {
-            throw new InvalidTokenException( 'ID token could not be decoded' );
+            throw new InvalidTokenException('ID token could not be decoded');
         }
 
-        $tokenAlg = $parsedToken->getHeader('alg', false);
+        $tokenAlg = $parsedToken->headers()->get('alg', false);
         if ($tokenAlg !== $this->alg) {
-            throw new InvalidTokenException( sprintf(
+            throw new InvalidTokenException(sprintf(
                 'Signature algorithm of "%s" is not supported. Expected the ID token to be signed with "%s".',
                 $tokenAlg,
                 $this->alg
-            ) );
+            ));
         }
 
-        if (! $this->checkSignature($parsedToken)) {
+        if (!$this->checkSignature($parsedToken)) {
             throw new InvalidTokenException('Invalid ID token signature');
         }
 
